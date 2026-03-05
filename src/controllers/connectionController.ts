@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse, ConnectionStatus } from '../types';
+import { ApiResponse, ConnectionStatus } from '../types/index.js';
 
 export const getConnectionStatus = async (
   req: Request,

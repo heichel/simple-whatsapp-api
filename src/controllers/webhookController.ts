@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse, RegisterWebhookRequest, Webhook } from '../types';
+import { ApiResponse, RegisterWebhookRequest, Webhook } from '../types/index.js';
 
 export const registerWebhook = async (
   req: Request<{}, {}, RegisterWebhookRequest>,

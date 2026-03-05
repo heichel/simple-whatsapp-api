@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getConnectionStatus, getQRCode, logout } from '../controllers/connectionController';
+import { getConnectionStatus, getQRCode, logout } from '../controllers/connectionController.js';
 
 const router = Router();
 

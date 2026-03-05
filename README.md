@@ -51,10 +51,28 @@ npm start
 curl -X POST http://localhost:3000/api/messages/send \
   -H "Content-Type: application/json" \
   -d '{
-    "to": "1234567890",
+    "to": "+14155551234",
     "message": "Hello from WhatsApp API!"
   }'
 ```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "messageId": "3EB0123456789ABCDEF",
+    "status": "sent"
+  }
+}
+```
+
+**Note:** Phone numbers should include country code. Accepted formats:
+- `+14155551234` (with + prefix)
+- `14155551234` (without + prefix)
+- `14155551234@s.whatsapp.net` (WhatsApp JID format)
+
+For detailed documentation, see [docs/SEND_MESSAGE.md](docs/SEND_MESSAGE.md)
 
 ### Register a Webhook
 ```bash

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse, SendMessageRequest, SendMessageResponse, MessageStatusResponse } from '../types';
+import { ApiResponse, SendMessageRequest, SendMessageResponse, MessageStatusResponse } from '../types/index.js';
+import whatsappService from '../services/whatsappService.js';
 
 export const sendMessage = async (
   req: Request<{}, {}, SendMessageRequest>,
@@ -9,12 +10,14 @@ export const sendMessage = async (
   try {
     const { to, message } = req.body;
 
-    // TODO: Implement actual message sending via Baileys
+    // Send message via WhatsApp service
+    const result = await whatsappService.sendMessage(to, message);
+
     const response: ApiResponse<SendMessageResponse> = {
       success: true,
       data: {
-        messageId: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        status: 'sent'
+        messageId: result.messageId,
+        status: result.status
       }
     };
 
