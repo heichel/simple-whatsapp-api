@@ -5,6 +5,7 @@ import webhookRoutes from './routes/webhookRoutes.js';
 import connectionRoutes from './routes/connectionRoutes.js';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
 import whatsappService from './services/whatsappService.js';
+import webhookService from './services/webhookService.js';
 
 dotenv.config();
 
@@ -40,6 +41,10 @@ whatsappService.on('qr', (qr) => {
 
 whatsappService.on('disconnected', () => {
   console.log('❌ WhatsApp disconnected');
+});
+
+whatsappService.on('message', async (message) => {
+  await webhookService.handleIncomingMessage(message);
 });
 
 app.listen(PORT, () => {

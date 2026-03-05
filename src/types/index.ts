@@ -25,11 +25,24 @@ export interface RegisterWebhookRequest {
   events?: string[];
 }
 
+export type WebhookEventType = 'message';
+
 export interface Webhook {
   id: string;
   url: string;
-  events: string[];
+  events: WebhookEventType[];
   createdAt: string;
+}
+
+export interface IncomingMessageWebhookData {
+  messageId: string | null;
+  from: string | null;
+  to: string | null;
+  fromMe: boolean;
+  pushName: string | null;
+  timestamp: string;
+  type: string;
+  text: string | null;
 }
 
 export interface ConnectionStatus {

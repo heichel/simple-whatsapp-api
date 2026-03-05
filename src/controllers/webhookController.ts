@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse, RegisterWebhookRequest, Webhook } from '../types/index.js';
+import webhookService from '../services/webhookService.js';
 
 export const registerWebhook = async (
   req: Request<{}, {}, RegisterWebhookRequest>,
@@ -8,14 +9,7 @@ export const registerWebhook = async (
 ) => {
   try {
     const { url, events = ['message'] } = req.body;
-
-    // TODO: Implement actual webhook registration
-    const webhook: Webhook = {
-      id: `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      url,
-      events,
-      createdAt: new Date().toISOString()
-    };
+    const webhook = webhookService.registerWebhook(url, events);
 
     const response: ApiResponse<Webhook> = {
       success: true,
@@ -35,8 +29,14 @@ export const unregisterWebhook = async (
 ) => {
   try {
     const { id } = req.params;
+    const removed = webhookService.unregisterWebhook(id);
 
-    // TODO: Implement actual webhook deletion
+    if (!removed) {
+      const error = new Error(`Webhook ${id} not found`) as Error & { statusCode?: number };
+      error.statusCode = 404;
+      throw error;
+    }
+
     const response: ApiResponse = {
       success: true,
       data: { message: `Webhook ${id} unregistered successfully` }
@@ -54,15 +54,7 @@ export const listWebhooks = async (
   next: NextFunction
 ) => {
   try {
-    // TODO: Implement actual webhook listing
-    const webhooks: Webhook[] = [
-      {
-        id: 'wh_example_123',
-        url: 'https://example.com/webhook',
-        events: ['message', 'status'],
-        createdAt: new Date().toISOString()
-      }
-    ];
+    const webhooks = webhookService.listWebhooks();
 
     const response: ApiResponse<Webhook[]> = {
       success: true,

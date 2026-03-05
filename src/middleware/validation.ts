@@ -53,6 +53,7 @@ export const validateWebhookRegistration = (
   next: NextFunction
 ) => {
   const { url, events } = req.body;
+  const supportedEvents = ['message'];
 
   const errors: string[] = [];
 
@@ -80,6 +81,11 @@ export const validateWebhookRegistration = (
       errors.push('Field "events" cannot be empty if provided');
     } else if (!events.every(e => typeof e === 'string')) {
       errors.push('All items in "events" must be strings');
+    } else {
+      const invalidEvents = events.filter((event) => !supportedEvents.includes(String(event).toLowerCase()));
+      if (invalidEvents.length > 0) {
+        errors.push(`Unsupported webhook events: ${invalidEvents.join(', ')}. Supported events: ${supportedEvents.join(', ')}`);
+      }
     }
   }
 
