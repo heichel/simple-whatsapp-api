@@ -1,9 +1,8 @@
 import makeWASocket, {
   DisconnectReason,
+  fetchLatestBaileysVersion,
   useMultiFileAuthState,
-  WASocket,
-  proto,
-  WAMessageKey
+  WASocket
 } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import P from 'pino';
@@ -16,6 +15,9 @@ class WhatsAppService extends EventEmitter {
   private authPath = './auth_info_baileys';
   private qrCode: string | null = null;
   private connectionStatus: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+  private reconnectAttempts = 0;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private isInitializing = false;
 
   constructor() {
     super();
@@ -23,13 +25,26 @@ class WhatsAppService extends EventEmitter {
   }
 
   private async initialize() {
+    if (this.isInitializing) {
+      return;
+    }
+
+    this.isInitializing = true;
+
     try {
       const { state, saveCreds } = await useMultiFileAuthState(this.authPath);
+      const { version, isLatest } = await fetchLatestBaileysVersion();
+
+      logger.info({ version, isLatest }, 'Using WhatsApp Web version');
 
       this.sock = makeWASocket({
         auth: state,
-        printQRInTerminal: true,
         logger,
+        version,
+        connectTimeoutMs: 60_000,
+        keepAliveIntervalMs: 30_000,
+        markOnlineOnConnect: true, /* prevents push notifications to phone */
+        syncFullHistory: false,
       });
 
       // Handle connection updates
@@ -43,20 +58,34 @@ class WhatsAppService extends EventEmitter {
         }
 
         if (connection === 'close') {
-          const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-          
-          logger.info('Connection closed', { shouldReconnect });
+          const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+          const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+          logger.warn(
+            {
+              statusCode,
+              shouldReconnect,
+            },
+            'Connection closed'
+          );
+
           this.connectionStatus = 'disconnected';
           this.emit('disconnected');
 
           if (shouldReconnect) {
-            logger.info('Reconnecting...');
-            this.initialize();
+            this.scheduleReconnect();
+          } else {
+            logger.warn('Logged out from WhatsApp. Re-login is required.');
           }
         } else if (connection === 'open') {
           logger.info('✅ WhatsApp connection opened');
           this.connectionStatus = 'connected';
           this.qrCode = null;
+          this.reconnectAttempts = 0;
+          if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+          }
           this.emit('connected');
         } else if (connection === 'connecting') {
           this.connectionStatus = 'connecting';
@@ -81,8 +110,29 @@ class WhatsAppService extends EventEmitter {
 
     } catch (error) {
       logger.error('Failed to initialize WhatsApp service:', error);
-      throw error;
+      this.connectionStatus = 'disconnected';
+      this.scheduleReconnect();
+    } finally {
+      this.isInitializing = false;
     }
+  }
+
+  private scheduleReconnect() {
+    if (this.reconnectTimer) {
+      return;
+    }
+
+    this.reconnectAttempts += 1;
+    const baseDelay = Math.min(1000 * 2 ** Math.min(this.reconnectAttempts, 6), 60_000);
+    const jitter = Math.floor(Math.random() * 1000);
+    const delay = baseDelay + jitter;
+
+    logger.info({ attempt: this.reconnectAttempts, delay }, 'Scheduling reconnect');
+
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.initialize();
+    }, delay);
   }
 
   /**
@@ -166,6 +216,11 @@ class WhatsAppService extends EventEmitter {
       this.sock = null;
       this.connectionStatus = 'disconnected';
       this.qrCode = null;
+      this.reconnectAttempts = 0;
+      if (this.reconnectTimer) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
       logger.info('Logged out from WhatsApp');
     }
   }

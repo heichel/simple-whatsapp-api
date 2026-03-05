@@ -8,6 +8,7 @@ A lightweight REST API that provides a simple interface to send and receive What
 - **Framework**: Express.js
 - **WhatsApp Client**: @whiskeysockets/baileys
 - **Language**: TypeScript (preferred) or JavaScript
+- **Modules**: CommonJS (needed for Baileys 6.7.x, after updating to 7.x.x, we can switch to ESM)
 
 ## Core Functionality
 1. **Send Messages**: POST endpoint to send text messages to WhatsApp numbers
