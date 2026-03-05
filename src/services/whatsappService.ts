@@ -7,6 +7,7 @@ import makeWASocket, {
 import { Boom } from '@hapi/boom';
 import P from 'pino';
 import { EventEmitter } from 'events';
+import { rmSync } from 'fs';
 
 const logger = P({ level: 'info' });
 
@@ -75,7 +76,29 @@ class WhatsAppService extends EventEmitter {
           if (shouldReconnect) {
             this.scheduleReconnect();
           } else {
-            logger.warn('Logged out from WhatsApp. Re-login is required.');
+            logger.warn('Logged out from WhatsApp. Discarding session and creating new session.');
+            // Clean up current socket to prevent memory leaks
+            if (this.sock) {
+              this.sock.ev.removeAllListeners('connection.update');
+              this.sock.ev.removeAllListeners('creds.update');
+              this.sock.ev.removeAllListeners('messages.upsert');
+              this.sock = null;
+            }
+            this.qrCode = null;
+            this.reconnectAttempts = 0;
+            if (this.reconnectTimer) {
+              clearTimeout(this.reconnectTimer);
+              this.reconnectTimer = null;
+            }
+            // Delete session files to prevent reusing invalidated credentials
+            try {
+              rmSync(this.authPath, { recursive: true, force: true });
+              logger.info('Session files deleted');
+            } catch (error) {
+              logger.error('Failed to delete session files:', error);
+            }
+            // Schedule reinitialization outside this callback to avoid recursion issues
+            setTimeout(() => this.initialize(), 1000);
           }
         } else if (connection === 'open') {
           logger.info('✅ WhatsApp connection opened');
