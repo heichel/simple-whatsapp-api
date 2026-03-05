@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse, ConnectionStatus } from '../types/index.js';
+import whatsappService from '../services/whatsappService.js';
+import QRCode from 'qrcode';
 
 export const getConnectionStatus = async (
   req: Request,
@@ -7,11 +9,12 @@ export const getConnectionStatus = async (
   next: NextFunction
 ) => {
   try {
-    // TODO: Implement actual connection status check
+    const serviceStatus = whatsappService.getConnectionStatus();
+    
     const status: ConnectionStatus = {
-      connected: false,
-      sessionExists: false,
-      qrCode: undefined
+      connected: serviceStatus.connected,
+      sessionExists: serviceStatus.sessionExists,
+      qrCode: serviceStatus.qrCode ?? undefined
     };
 
     const response: ApiResponse<ConnectionStatus> = {
@@ -27,19 +30,29 @@ export const getConnectionStatus = async (
 
 export const getQRCode = async (
   req: Request,
-  res: Response<ApiResponse<{ qrCode: string }>>,
+  res: Response,
   next: NextFunction
 ) => {
   try {
-    // TODO: Implement actual QR code generation
-    const response: ApiResponse<{ qrCode: string }> = {
-      success: true,
-      data: {
-        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
-      }
-    };
+    const qrCodeData = whatsappService.getQRCode();
 
-    res.status(200).json(response);
+    if (!qrCodeData) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'No QR code available. WhatsApp may already be connected or not yet initialized.'
+      };
+      return res.status(404).json(response);
+    }
+
+    // Convert QR code data to PNG image buffer
+    const qrCodeBuffer = await QRCode.toBuffer(qrCodeData, {
+      type: 'png',
+      width: 300,
+      margin: 2
+    });
+
+    res.setHeader('Content-Type', 'image/png');
+    res.status(200).send(qrCodeBuffer);
   } catch (error) {
     next(error);
   }
@@ -51,7 +64,8 @@ export const logout = async (
   next: NextFunction
 ) => {
   try {
-    // TODO: Implement actual logout
+    await whatsappService.logout();
+    
     const response: ApiResponse = {
       success: true,
       data: { message: 'Logged out successfully' }
