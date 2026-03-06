@@ -2,6 +2,13 @@
 
 A lightweight REST API for sending and receiving WhatsApp messages using the Baileys library.
 
+## Introduction
+
+This project is a simple WhatsApp API for personal and test automation projects. It connects to a single WhatsApp account via the WhatsApp or WhatsApp Business mobile app, and exposes local HTTP endpoints to send messages and receive incoming messages through webhooks.
+
+> **Disclaimer**
+> This project is not production-ready (for example: no authentication, hardening, monitoring, abuse protection, or enterprise-grade safeguards). You must adapt the code to your own use case and security requirements before any serious deployment. It is not intended for commercial use, and is not affiliated with, endorsed by, or sponsored by WhatsApp or Meta. Any use of this project is entirely at your own risk.
+
 ## Runtime Notes
 
 - This project uses **ESM** (`"type": "module"`) and TypeScript `NodeNext` module resolution.
@@ -33,7 +40,7 @@ npm start
 
 ## Docker
 
-This repository includes a production-ready [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml).
+This repository includes a [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml) for easy deployment.
 
 ### Run with Docker Compose (internal network)
 
