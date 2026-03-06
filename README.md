@@ -31,6 +31,33 @@ npm run build
 npm start
 ```
 
+## Docker
+
+This repository includes a production-ready [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml).
+
+### Run with Docker Compose (internal network)
+
+```bash
+docker compose up -d --build
+```
+
+- The API listens on port `3000` **inside** Docker.
+- It is attached to the `whatsapp_api_internal` Docker network.
+- No host port is published, so the service is intended for other containers on that network.
+
+From another container on the same Docker network, call:
+
+```text
+http://simple-whatsapp-api:3000
+```
+
+### Persisted data
+
+Compose mounts these folders so WhatsApp auth/session and webhook config survive container restarts:
+
+- `./auth_info_baileys` → `/app/auth_info_baileys`
+- `./config_baileys` → `/app/config_baileys`
+
 ## API Endpoints
 
 ### Health Check

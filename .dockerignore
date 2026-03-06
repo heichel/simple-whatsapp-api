@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.github
+.vscode
+dist
+.env
+*.local
+*.log
+auth_info_baileys
+config_baileys

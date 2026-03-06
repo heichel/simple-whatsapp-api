@@ -1,0 +1,37 @@
+name: simple-whatsapp-api
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: simple-whatsapp-api:latest
+    container_name: simple-whatsapp-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+    expose:
+      - "3000"
+    volumes:
+      - ./auth_info_baileys:/app/auth_info_baileys
+      - ./config_baileys:/app/config_baileys
+    networks:
+      - whatsapp_api_internal
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+networks:
+  whatsapp_api_internal:
+    name: whatsapp_api_internal
+    driver: bridge
