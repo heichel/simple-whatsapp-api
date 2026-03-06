@@ -22,7 +22,7 @@ echo ""
 echo "4. Register Webhook"
 curl -s -X POST $BASE_URL/api/webhooks/register \
   -H "Content-Type: application/json" \
-  -d '{"url":"https://example.com/webhook","events":["message","status"]}' | jq .
+  -d '{"url":"https://example.com/webhook","events":["message"]}' | jq .
 echo ""
 
 echo "5. List Webhooks"

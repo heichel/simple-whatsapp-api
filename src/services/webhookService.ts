@@ -1,10 +1,10 @@
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
-import P from 'pino';
+import { pino } from 'pino';
 import { Webhook, WebhookEventType, IncomingMessageWebhookData } from '../types/index.js';
 
-const logger = P({ level: 'info' });
+const logger = pino({ level: 'info' });
 
 class WebhookService {
   private webhooks = new Map<string, Webhook>();
@@ -154,11 +154,15 @@ class WebhookService {
 
   private mapIncomingMessage(message: any): IncomingMessageWebhookData {
     const messageType = this.detectMessageType(message);
+    const remoteJid = message?.key?.remoteJid ?? null;
+    const remoteJidAlt = message?.key?.remoteJidAlt ?? null;
+    const participant = message?.key?.participant ?? null;
+    const participantAlt = message?.key?.participantAlt ?? null;
 
     return {
       messageId: message?.key?.id ?? null,
-      from: message?.key?.remoteJid ?? null,
-      to: message?.key?.participant ?? null,
+      from: remoteJidAlt ?? remoteJid,
+      to: participantAlt ?? participant,
       fromMe: Boolean(message?.key?.fromMe),
       pushName: message?.pushName ?? null,
       timestamp: this.normalizeTimestamp(message?.messageTimestamp),

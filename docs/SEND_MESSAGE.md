@@ -18,17 +18,18 @@ Content-Type: application/json
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `to` | string | Yes | Phone number in international format (10-15 digits). Can include '+' or '@s.whatsapp.net' suffix |
+| `to` | string | Yes | Recipient as phone number or full WhatsApp JID |
 | `message` | string | Yes | Text message to send (max 4096 characters) |
 
-### Phone Number Format
+### Recipient Format
 
-The API accepts phone numbers in multiple formats:
+The API accepts recipients in multiple formats:
 - `+491234567890` (international with +)
 - `491234567890` (without +)
-- `491234567890@s.whatsapp.net` (WhatsApp JID format)
+- `491234567890@s.whatsapp.net` (PN JID)
+- `<id>@lid` (LID JID)
 
-All formats are automatically normalized to the WhatsApp JID format internally.
+Phone numbers are normalized to PN JIDs internally. Full JIDs are used as provided.
 
 ### Example Request
 
@@ -115,12 +116,11 @@ const data = await response.json();
 
 ## Validation Rules
 
-### Phone Number (`to`)
+### Recipient (`to`)
 - ✅ Required field
 - ✅ Must be a string
-- ✅ Must contain 10-15 digits
-- ✅ Can optionally include '+' prefix
-- ✅ Can optionally include '@s.whatsapp.net' suffix
+- ✅ Can be an international phone number (10-15 digits, optional `+`)
+- ✅ Can be a WhatsApp JID (`<id>@<server>`, including PN or LID)
 
 ### Message (`message`)
 - ✅ Required field
@@ -247,10 +247,11 @@ curl -X POST http://localhost:3000/api/messages/send \
 4. Wait for connection to establish
 5. Retry sending message
 
-### "Invalid phone number" Error
-- Ensure phone number includes country code
-- Remove any spaces, dashes, or parentheses
+### "Invalid recipient" Error
+- If using phone number format, include country code
+- Remove spaces, dashes, or parentheses
 - Example: `+14155551234` not `+1 (415) 555-1234`
+- If using JID format, ensure it contains `@` (example: `14155551234@s.whatsapp.net`)
 
 ### Message Not Delivered
 - Verify the recipient's number is registered on WhatsApp

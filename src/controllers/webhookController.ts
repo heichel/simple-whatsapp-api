@@ -39,7 +39,7 @@ export const unregisterWebhook = async (
 
     const response: ApiResponse = {
       success: true,
-      data: { message: `Webhook ${id} unregistered successfully` }
+      data: { message: `Webhook ${id} unregistered successfully. NOTE: Do not reply immediately to messages to avoid being flagged as spam.` }
     };
 
     res.status(200).json(response);

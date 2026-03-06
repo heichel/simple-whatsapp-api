@@ -8,7 +8,7 @@ A lightweight REST API that provides a simple interface to send and receive What
 - **Framework**: Express.js
 - **WhatsApp Client**: @whiskeysockets/baileys
 - **Language**: TypeScript (preferred) or JavaScript
-- **Modules**: CommonJS (needed for Baileys 6.7.x, after updating to 7.x.x, we can switch to ESM)
+- **Modules**: ESM (`"type": "module"`, NodeNext TypeScript settings)
 
 ## Core Functionality
 1. **Send Messages**: POST endpoint to send text messages to WhatsApp numbers
@@ -55,6 +55,8 @@ src/
 - Handle connection lifecycle properly (connect, disconnect, reconnect)
 - Store authentication state persistently
 - Implement proper event listeners for messages and connection updates
+- Prefer JID-based addressing end-to-end. Accept phone numbers as input for convenience, but normalize to WhatsApp JID for send operations.
+- Baileys v7 can expose alternate addressing (`remoteJidAlt`, `participantAlt`) in message keys; preserve these where useful in webhook payload mapping.
 
 ### Security Considerations
 - Validate all incoming requests
@@ -111,3 +113,4 @@ src/
 - Handle multi-device support appropriately
 - Consider implementing message queuing for reliability
 - Rate limits should align with WhatsApp's unofficial limits to avoid bans
+- Project is ESM-first and should avoid CommonJS patterns (`require`, `module.exports`) in source files.

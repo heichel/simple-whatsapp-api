@@ -2,6 +2,12 @@
 
 A lightweight REST API for sending and receiving WhatsApp messages using the Baileys library.
 
+## Runtime Notes
+
+- This project uses **ESM** (`"type": "module"`) and TypeScript `NodeNext` module resolution.
+- Built for **Baileys v7**.
+- The API accepts recipient input as either phone numbers or WhatsApp JIDs.
+
 ## Quick Start
 
 1. Install dependencies:
@@ -70,7 +76,8 @@ curl -X POST http://localhost:3000/api/messages/send \
 **Note:** Phone numbers should include country code. Accepted formats:
 - `+14155551234` (with + prefix)
 - `14155551234` (without + prefix)
-- `14155551234@s.whatsapp.net` (WhatsApp JID format)
+- `14155551234@s.whatsapp.net` (PN JID format)
+- `<id>@lid` (LID JID format)
 
 For detailed documentation, see [docs/SEND_MESSAGE.md](docs/SEND_MESSAGE.md)
 
@@ -80,9 +87,11 @@ curl -X POST http://localhost:3000/api/webhooks/register \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://your-domain.com/webhook",
-    "events": ["message", "status"]
+    "events": ["message"]
   }'
 ```
+
+Currently supported webhook events: `message`
 
 ## Response Format
 

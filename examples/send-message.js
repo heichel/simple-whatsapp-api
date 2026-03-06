@@ -8,11 +8,11 @@ const API_BASE_URL = 'http://localhost:3000';
 
 /**
  * Send a WhatsApp message
- * @param {string} phoneNumber - Phone number in international format (e.g., +14155551234)
+ * @param {string} recipient - Phone number or WhatsApp JID (e.g., +14155551234 or 14155551234@s.whatsapp.net)
  * @param {string} message - Message text to send
  * @returns {Promise<Object>} Response with messageId and status
  */
-async function sendWhatsAppMessage(phoneNumber, message) {
+async function sendWhatsAppMessage(recipient, message) {
     try {
         const response = await fetch(`${API_BASE_URL}/api/messages/send`, {
             method: 'POST',
@@ -20,7 +20,7 @@ async function sendWhatsAppMessage(phoneNumber, message) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                to: phoneNumber,
+                to: recipient,
                 message: message
             })
         });
@@ -95,7 +95,4 @@ async function main() {
 // Run the example
 main().catch(console.error);
 
-// Export for use in other files
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { sendWhatsAppMessage, checkConnection };
-}
+export { sendWhatsAppMessage, checkConnection };

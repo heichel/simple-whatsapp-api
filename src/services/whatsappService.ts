@@ -4,12 +4,11 @@ import makeWASocket, {
   useMultiFileAuthState,
   WASocket
 } from '@whiskeysockets/baileys';
-import { Boom } from '@hapi/boom';
-import P from 'pino';
+import { pino } from 'pino';
 import { EventEmitter } from 'events';
 import { rmSync } from 'fs';
 
-const logger = P({ level: 'info' });
+const logger = pino({ level: 'info' });
 
 class WhatsAppService extends EventEmitter {
   private sock: WASocket | null = null;
@@ -59,7 +58,7 @@ class WhatsAppService extends EventEmitter {
         }
 
         if (connection === 'close') {
-          const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+          const statusCode = (lastDisconnect?.error as { output?: { statusCode?: number } })?.output?.statusCode;
           const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
           logger.warn(
@@ -159,8 +158,8 @@ class WhatsAppService extends EventEmitter {
   }
 
   /**
-   * Send a text message to a WhatsApp number
-   * @param to - Phone number in format: countrycode+number@s.whatsapp.net (e.g., 491234567890@s.whatsapp.net)
+    * Send a text message to a WhatsApp recipient
+    * @param to - Phone number (e.g. +491234567890) or full WhatsApp JID (PN or LID)
    * @param message - Text message to send
    * @returns Message info with message ID
    */
@@ -174,17 +173,18 @@ class WhatsAppService extends EventEmitter {
     }
 
     try {
-      // Format phone number if needed (ensure it has @s.whatsapp.net suffix)
-      const formattedNumber = this.formatPhoneNumber(to);
+      // Format destination to supported WhatsApp JID format.
+      // For Baileys v7, this supports both classic PN JIDs and LID JIDs.
+      const destinationJid = this.formatDestinationJid(to);
 
       // Send the message
-      const sentMessage = await this.sock.sendMessage(formattedNumber, {
+      const sentMessage = await this.sock.sendMessage(destinationJid, {
         text: message
       });
 
       const messageId = sentMessage?.key?.id || `msg_${Date.now()}`;
 
-      logger.info('Message sent successfully', { to: formattedNumber, messageId });
+      logger.info('Message sent successfully', { to: destinationJid, messageId });
 
       return {
         messageId,
@@ -197,19 +197,24 @@ class WhatsAppService extends EventEmitter {
   }
 
   /**
-   * Format phone number to WhatsApp JID format
-   * Accepts: +491234567890, 491234567890, or 491234567890@s.whatsapp.net
-   * Returns: 491234567890@s.whatsapp.net
+    * Format recipient destination into a WhatsApp JID.
+    * Accepts phone numbers or JIDs (including LID JIDs in Baileys v7).
    */
-  private formatPhoneNumber(phoneNumber: string): string {
-    // Remove @ and everything after it if present
-    let cleaned = phoneNumber.split('@')[0];
-    
-    // Remove + and any non-digit characters
-    cleaned = cleaned.replace(/\D/g, '');
+  private formatDestinationJid(value: string): string {
+    const input = value.trim();
 
-    // Add @s.whatsapp.net suffix
+    // If this already looks like a JID (including new LID-based IDs), use as-is.
+    if (this.isLikelyJid(input)) {
+      return input;
+    }
+
+    // Otherwise, treat this as a phone number and convert to PN JID.
+    const cleaned = input.replace(/\D/g, '');
     return `${cleaned}@s.whatsapp.net`;
+  }
+
+  private isLikelyJid(value: string): boolean {
+    return /^[^@\s]+@[^@\s]+$/.test(value);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ApiResponse } from '../types';
+import { ApiResponse } from '../types/index.js';
 
 /**
  * Validate send message request
@@ -18,8 +18,14 @@ export const validateSendMessage = (
     errors.push('Field "to" is required');
   } else if (typeof to !== 'string') {
     errors.push('Field "to" must be a string');
-  } else if (!/^\+?\d{10,15}(@s\.whatsapp\.net)?$/.test(to)) {
-    errors.push('Field "to" must be a valid phone number (10-15 digits)');
+  } else {
+    const trimmedTo = to.trim();
+    const isPhoneNumber = /^\+?\d{10,15}$/.test(trimmedTo);
+    const isJid = /^[^@\s]+@[^@\s]+$/.test(trimmedTo);
+
+    if (!isPhoneNumber && !isJid) {
+      errors.push('Field "to" must be a valid phone number (10-15 digits) or WhatsApp JID');
+    }
   }
 
   // Validate 'message' field
