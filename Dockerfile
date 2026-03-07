@@ -3,7 +3,8 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package*.json ./
-RUN npm ci
+# Fix for esbuild ETXTBSY error in Docker builds
+RUN npm ci || (sleep 2 && npm ci)
 
 FROM deps AS build
 COPY tsconfig.json ./
@@ -16,7 +17,8 @@ ENV NODE_ENV=production
 ENV PORT=3000
 
 COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+# Fix for esbuild ETXTBSY error in Docker builds
+RUN npm ci --omit=dev || (sleep 2 && npm ci --omit=dev) && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 
