@@ -43,6 +43,7 @@ export interface IncomingMessageWebhookData {
   timestamp: string;
   type: string;
   text: string | null;
+  audioBase64: string | null;
 }
 
 export interface ConnectionStatus {

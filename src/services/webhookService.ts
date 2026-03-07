@@ -1,8 +1,9 @@
+import { downloadMediaMessage } from "@whiskeysockets/baileys";
 import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import { pino } from 'pino';
-import { Webhook, WebhookEventType, IncomingMessageWebhookData } from '../types/index.js';
+import { IncomingMessageWebhookData, Webhook, WebhookEventType } from '../types/index.js';
 
 const logger = pino({ level: 'info' });
 
@@ -52,7 +53,7 @@ class WebhookService {
   }
 
   async handleIncomingMessage(message: any): Promise<void> {
-    const payload = this.mapIncomingMessage(message);
+    const payload = await this.mapIncomingMessage(message);
     await this.dispatchEvent('message', payload);
   }
 
@@ -152,7 +153,7 @@ class WebhookService {
     }
   }
 
-  private mapIncomingMessage(message: any): IncomingMessageWebhookData {
+  private async mapIncomingMessage(message: any): Promise<IncomingMessageWebhookData> {
     const messageType = this.detectMessageType(message);
     const remoteJid = message?.key?.remoteJid ?? null;
     const remoteJidAlt = message?.key?.remoteJidAlt ?? null;
@@ -167,7 +168,8 @@ class WebhookService {
       pushName: message?.pushName ?? null,
       timestamp: this.normalizeTimestamp(message?.messageTimestamp),
       type: messageType,
-      text: this.extractMessageText(message)
+      text: this.extractMessageText(message),
+      audioBase64: await this.extractMessageAudio(message)
     };
   }
 
@@ -209,6 +211,19 @@ class WebhookService {
       null
     );
   }
+
+  private async extractMessageAudio(message: any) {
+      if (!message?.message?.audioMessage) {
+        return null;
+      }
+
+      // TODO: add `{ reuploadRequest: conn.updateMediaMessage }`?
+      // See https://baileys.wiki/docs/api/functions/downloadMediaMessage
+      const buffer = await downloadMediaMessage(message, 'buffer', {});
+
+      return buffer.toString('base64');
+  }
 }
+
 
 export default new WebhookService();
